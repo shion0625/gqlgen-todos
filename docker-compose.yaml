@@ -1,0 +1,32 @@
+version: '3.9'
+
+services:
+  server:  #サービス名
+    build:
+      context: ./docker/go  #ビルドに使用するDockerfileの場所
+      dockerfile: Dockerfile
+    container_name: gqlgen-todos  #コンテナの名前
+    tty: true  #コンテナの永続化
+    ports:
+      - '8080:8080'
+    depends_on:  #依存関係
+      - db
+    volumes:  #マウントディレクトリ
+      - .:/app
+      - go-data:/go
+
+  db:  #サービス名
+    image: postgres:latest  #ビルドに使用するimageファイル
+    container_name: postgres  #コンテナの名前
+    environment:
+      POSTGRES_DB: 'todo'  #データベース名
+      POSTGRES_PASSWORD: 'password'  #データベースパスワード
+      POSTGRES_USER: 'postgres'  #データベースユーザ名
+      TimeZone: Asia/Tokyo  #タイムゾーン
+    ports:
+      - '5432:5432'
+    volumes:  #マウントディレクトリ
+      - /var/lib/postgres/data
+
+volumes:
+  go-data:
