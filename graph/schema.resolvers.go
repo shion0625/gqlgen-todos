@@ -17,18 +17,27 @@ import (
 func (r *mutationResolver) CreateTodo(ctx context.Context, input model.NewTodo) (*model.Todo, error) {
 	//ランダムな数字の生成
 	rand, _ := rand.Int(rand.Reader, big.NewInt(100))
-	todo := &model.Todo{
+	todo := model.Todo{
 		Text:   input.Text,
 		ID:     fmt.Sprintf("T%d", rand),
-		User: &model.User{ID: input.UserID, Name: "user " + input.UserID},
+		UserId: input.UserID,
 	}
-	r.todos = append(r.todos, todo)
-	return todo, nil
+	r.DB.Create(&todo)
+	return &todo, nil
 }
 
 // Todos is the resolver for the todos field.
 func (r *queryResolver) Todos(ctx context.Context) ([]*model.Todo, error) {
-	return r.todos, nil
+	todos := []*model.Todo{}
+	r.DB.Find(&todos)
+	return todos, nil
+}
+
+// User is the resolver for the user field.
+func (r *todoResolver) User(ctx context.Context, obj *model.Todo) (*model.User, error) {
+	user := model.User{ID: obj.UserId}
+	r.DB.First(&user)
+	return &user, nil
 }
 
 // Mutation returns MutationResolver implementation.
@@ -37,5 +46,9 @@ func (r *Resolver) Mutation() MutationResolver { return &mutationResolver{r} }
 // Query returns QueryResolver implementation.
 func (r *Resolver) Query() QueryResolver { return &queryResolver{r} }
 
+// Todo returns TodoResolver implementation.
+func (r *Resolver) Todo() TodoResolver { return &todoResolver{r} }
+
 type mutationResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
+type todoResolver struct{ *Resolver }
