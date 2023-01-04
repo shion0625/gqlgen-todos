@@ -9,7 +9,6 @@ import (
 	"crypto/rand"
 	"fmt"
 	"math/big"
-
 	"github.com/shion0625/gqlgen-todos/graph/model"
 	"github.com/shion0625/gqlgen-todos/loader"
 )
@@ -64,8 +63,10 @@ func (r *todoResolver) User(ctx context.Context, obj *model.Todo) (*model.User, 
 
 // Todos is the resolver for the todos field.
 func (r *userResolver) Todos(ctx context.Context, obj *model.User) ([]*model.Todo, error) {
-	todo := []*model.Todo{}
-	r.DB.Debug().Where("user_id = ?", obj.ID).Find(&todo)
+	todo, err := loader.LoadTodo(ctx, obj.ID)
+    if err != nil {
+      return nil, err
+  }
 	return todo, nil
 }
 

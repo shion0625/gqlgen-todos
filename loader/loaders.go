@@ -16,6 +16,7 @@ const (
 // 各DataLoaderを取りまとめるstruct
 type Loaders struct {
 	UserLoader *dataloader.Loader
+	TodoLoader *dataloader.Loader
 }
 
 // Loadersの初期化メソッド
@@ -25,8 +26,13 @@ func NewLoaders(db *gorm.DB) *Loaders {
 	userLoader := &UserLoader{
 		DB: db,
 	}
+  todoLoader := &TodoLoader{
+		DB: db,
+  }
+
 	loaders := &Loaders{
 		UserLoader: dataloader.NewBatchedLoader(userLoader.BatchGetUsers),
+		TodoLoader: dataloader.NewBatchedLoader(todoLoader.BatchGetTodos),
 	}
 	return loaders
 }
