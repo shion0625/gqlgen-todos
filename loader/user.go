@@ -18,19 +18,30 @@ type UserLoader struct {
 func (u *UserLoader) BatchGetUsers(ctx context.Context, keys dataloader.Keys) []*dataloader.Result {
 	// 単一のクエリで要求されたすべてのユーザーを読み取ります
 	userIDs := make([]string, len(keys))
-	users := []*model.User{}
 	for ix, key := range keys {
 		userIDs[ix] = key.String()
 	}
 
-	if err := u.DB.Debug().Where("id IN ?", userIDs).Find(&users).Error; err != nil {
+	usersTemp := []*model.User{}
+	if err := u.DB.Debug().Where("id IN ?", userIDs).Find(&usersTemp).Error; err != nil {
 		err := fmt.Errorf("fail get users, %w", err)
 		log.Printf("%v\n", err)
 		return nil
 	}
 
+	usersByUserId := map[string]*model.User{}
+	for _, user := range usersTemp {
+		usersByUserId[user.ID] = user
+	}
+
+	users := make([]*model.User, len(userIDs))
+
+	for i, id := range userIDs {
+		users[i] = usersByUserId[id]
+	}
+
 	output := make([]*dataloader.Result, len(keys))
-	for index := range users {
+	for index := range userIDs {
 		user := users[index]
 		output[index] = &dataloader.Result{Data: user, Error: nil}
 	}
