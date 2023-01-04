@@ -11,6 +11,7 @@ import (
 	"math/big"
 
 	"github.com/shion0625/gqlgen-todos/graph/model"
+	"github.com/shion0625/gqlgen-todos/loader"
 )
 
 // CreateTodo is the resolver for the createTodo field.
@@ -22,7 +23,7 @@ func (r *mutationResolver) CreateTodo(ctx context.Context, input model.NewTodo) 
 		ID:     fmt.Sprintf("T%d", rand),
 		UserId: input.UserID,
 	}
-	r.DB.Create(&todo)
+	r.DB.Debug().Create(&todo)
 	return &todo, nil
 }
 
@@ -34,29 +35,31 @@ func (r *mutationResolver) CreateUser(ctx context.Context, input model.NewUser) 
 		ID:     fmt.Sprintf("U%d", rand),
 		Name:   input.Name,
 	}
-	r.DB.Create(&user)
+	r.DB.Debug().Create(&user)
 	return &user, nil
 }
 
 // Todos is the resolver for the todos field.
 func (r *queryResolver) Todos(ctx context.Context) ([]*model.Todo, error) {
 	todos := []*model.Todo{}
-	r.DB.Find(&todos)
+	r.DB.Debug().Find(&todos)
 	return todos, nil
 }
 
 // Users is the resolver for the users field.
 func (r *queryResolver) Users(ctx context.Context) ([]*model.User, error) {
 	user := []*model.User{}
-	r.DB.Find(&user)
+	r.DB.Debug().Find(&user)
 	return user, nil
 }
 
 // User is the resolver for the user field.
 func (r *todoResolver) User(ctx context.Context, obj *model.Todo) (*model.User, error) {
-	user := model.User{ID: obj.UserId}
-	r.DB.First(&user)
-	return &user, nil
+	user, err := loader.LoadUser(ctx, obj.UserId)
+    if err != nil {
+      return nil, err
+  }
+	return user, nil
 }
 
 // Todos is the resolver for the todos field.

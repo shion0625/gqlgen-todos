@@ -8,8 +8,9 @@ import (
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/playground"
 	"github.com/shion0625/gqlgen-todos/graph"
-	"github.com/shion0625/gqlgen-todos/db" //追加
+	"github.com/shion0625/gqlgen-todos/db"
 	"github.com/joho/godotenv"
+	"github.com/shion0625/gqlgen-todos/loader"
 )
 
 const defaultPort = "8080"
@@ -23,6 +24,8 @@ func main() {
 
 	//データベースへの接続処理
 	db := db.ConnectGORM() //追加
+  // loaderの初期化
+  ldrs := loader.NewLoaders(db)
 
 	// resolver内でデータベースを扱えるように設定
 	srv := handler.NewDefaultServer(graph.NewExecutableSchema(graph.Config{Resolvers: &graph.Resolver{
@@ -30,7 +33,7 @@ func main() {
 	}}))
 
 	http.Handle("/", playground.Handler("GraphQL playground", "/query"))
-	http.Handle("/query", srv)
+	http.Handle("/query", loader.Middleware(ldrs, srv))
 
 	log.Printf("connect to http://localhost:%s/ for GraphQL playground", port)
 	log.Fatal(http.ListenAndServe(":"+port, nil))
